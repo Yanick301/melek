@@ -219,34 +219,37 @@
         </svg></button>
     <div class="toast-container"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
     <script src="js/products.js"></script>
     <script src="js/main.js"></script>
     <script>
-        const grid = document.getElementById('looks-grid');
-        const looks = getLooks();
-        if (looks.length === 0) {
-            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Aucun look pour l\'instant</h3><p>Revenez bientôt pour découvrir les nouvelles inspirations mode !</p></div>';
-        } else {
-            grid.innerHTML = looks.map(look => {
-                const isVideo = look.media_type === 'video';
-                const mediaSrc = (look.image && !look.image.startsWith('idbv:')) ? look.image : '';
-                const dataIdb = look.image && look.image.startsWith('idbv:') ? `data-idb="${look.image}"` : '';
-                const mediaEl = isVideo
-                    ? `<video class="look-video" src="${mediaSrc}" ${dataIdb} muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;min-height:260px;transition:transform .6s"></video>`
-                    : `<img src="${mediaSrc}" ${dataIdb} alt="${look.description}" loading="lazy">`;
-                return `
-      <div class="look-card reveal">
-        ${mediaEl}
-        <div class="look-overlay">
-          <p>${look.description}</p>
-          <div class="look-tags">${look.tags.map(t => `<span class="look-tag">${t}</span>`).join('')}</div>
-          <div class="look-date">${look.date || ''} ${isVideo ? '🎬' : '📷'}</div>
-        </div>
-      </div>`;
-            }).join('');
-            if (window.loadIDBMedia) window.loadIDBMedia(grid);
-        }
-        if (window.observeReveal) observeReveal();
+        (async function initLooks() {
+            const grid = document.getElementById('looks-grid');
+            const looksAll = await getLooks();
+            const looks = looksAll;
+            if (looks.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Aucun look pour l\'instant</h3><p>Revenez bientôt pour découvrir les nouvelles inspirations mode !</p></div>';
+            } else {
+                grid.innerHTML = looks.map(look => {
+                    const isVideo = look.media_type === 'video';
+                    const mediaSrc = look.image || '';
+                    const mediaEl = isVideo
+                        ? `<video class="look-video" src="${mediaSrc}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;min-height:260px;transition:transform .6s"></video>`
+                        : `<img src="${mediaSrc}" alt="${look.description}" loading="lazy">`;
+                    return `
+          <div class="look-card reveal">
+            ${mediaEl}
+            <div class="look-overlay">
+              <p>${look.description}</p>
+              <div class="look-tags">${look.tags.map(t => `<span class="look-tag">${t}</span>`).join('')}</div>
+              <div class="look-date">${look.date || ''} ${isVideo ? '🎬' : '📷'}</div>
+            </div>
+          </div>`;
+                }).join('');
+            }
+            if (window.observeReveal) observeReveal();
+        })();
     </script>
 </body>
 

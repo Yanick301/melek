@@ -53,8 +53,8 @@ function switchTab(tab) {
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────
-function loadDashboard() {
-  const prods = getProducts();
+async function loadDashboard() {
+  const prods = await getProducts();
   document.getElementById('stat-total').textContent = prods.length;
   document.getElementById('stat-homme').textContent = prods.filter(p => p.category === 'homme').length;
   document.getElementById('stat-femme').textContent = prods.filter(p => p.category === 'femme').length;
@@ -62,8 +62,8 @@ function loadDashboard() {
   const recentList = document.getElementById('recent-products');
   if (!recentList) return;
   recentList.innerHTML = '';
-  prods.slice(-5).reverse().forEach(p => {
-    const src = p.image.startsWith('idbv:') ? '' : p.image;
+  prods.slice(0, 5).forEach(p => {
+    const src = p.image || '';
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><img class="thumb" src="${src}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/52x52/1a1a1a/c9a96e?text=IMG'"></td>
@@ -76,17 +76,17 @@ function loadDashboard() {
 }
 
 // ── PRODUCT TABLE ─────────────────────────────────────────────
-function loadProductTable() {
+async function loadProductTable() {
   const tbody = document.getElementById('products-tbody');
   if (!tbody) return;
-  const prods = getProducts();
+  const prods = await getProducts();
   tbody.innerHTML = '';
   if (prods.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Aucun produit. Ajoutez-en un !</td></tr>`;
     return;
   }
   prods.forEach(p => {
-    const src = (p.image && !p.image.startsWith('idbv:')) ? p.image : '';
+    const src = p.image || '';
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><img class="thumb" src="${src}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/52x52/1a1a1a/c9a96e?text=IMG'"></td>
@@ -119,8 +119,8 @@ function openAddProduct() {
   document.getElementById('form-overlay').classList.add('open');
 }
 
-function openEditProduct(id) {
-  const p = getProductById(id);
+async function openEditProduct(id) {
+  const p = await getProductById(id);
   if (!p) return;
   editingId = id; productImageData = null;
   document.getElementById('fm-title').textContent = 'Modifier le produit';
@@ -133,9 +133,9 @@ function openEditProduct(id) {
   document.getElementById('fm-featured').checked = p.featured;
   // Show current image
   const preview = document.getElementById('fm-img-preview');
-  if (p.image && !p.image.startsWith('idbv:')) {
+  if (p.image) {
     preview.src = p.image; preview.classList.add('show');
-    // Switch to URL tab to show existing URL
+    // Switch to URL tab to show existing URL if not a standard data URL...
     if (p.image.startsWith('http')) {
       switchImgTab('url', document.querySelectorAll('.upload-tab')[1]);
       document.getElementById('fm-image-url').value = p.image;
@@ -163,14 +163,14 @@ function switchImgTab(mode, btn) {
 // Handle local file selection for product
 function handleProductImageUpload(input) {
   const file = input.files[0]; if (!file) return;
-  if (file.size > 2000000) {
-    showToast('Image trop grande ! Max recommandé : 2MB', 'error');
+  if (file.size > 5000000) {
+    showToast('Image trop grande ! Max recommandé : 5MB', 'error');
     input.value = ''; return;
   }
+  // Base64 is just for preview now
   const reader = new FileReader();
   reader.onload = e => {
-    productImageData = e.target.result;
-    document.getElementById('fm-img-preview').src = productImageData;
+    document.getElementById('fm-img-preview').src = e.target.result;
     document.getElementById('fm-img-preview').classList.add('show');
     if (document.getElementById('file-drop-label')) updateDropLabel('file-drop-label', file);
   };
@@ -185,7 +185,7 @@ function previewImage() {
   else { preview.classList.remove('show'); }
 }
 
-function saveProduct() {
+async function saveProduct() {
   const name = document.getElementById('fm-name').value.trim();
   const category = document.getElementById('fm-category').value;
   const subcategory = document.getElementById('fm-subcategory').value.trim();
@@ -194,47 +194,79 @@ function saveProduct() {
   const badge = document.getElementById('fm-badge').value.trim() || null;
   const featured = document.getElementById('fm-featured').checked;
   const urlVal = document.getElementById('fm-image-url').value.trim();
+  const fileInput = document.getElementById('fm-image-file');
+  const file = fileInput.files[0];
 
-  // Determine image source: uploaded file (base64) or URL
-  let image = productImageData || urlVal;
-  if (!image && editingId) {
-    const existing = getProductById(editingId);
+  if (!name || !category || !subcategory || !description || !price) {
+    showToast('Veuillez remplir tous les champs', 'error'); return;
+  }
+
+  const btn = document.querySelector('#product-form button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement...';
+
+  let image = urlVal;
+
+  // If editing and no new media provided, keep existing
+  if (!image && !file && editingId) {
+    const existing = await getProductById(editingId);
     image = existing?.image || '';
   }
 
-  if (!name || !category || !subcategory || !description || !price || !image) {
-    showToast('Veuillez remplir tous les champs et ajouter une image', 'error'); return;
+  // Upload to Supabase Storage if file is selected
+  if (file) {
+    showToast('Upload de l\'image en cours...');
+    const fileExt = file.name.split('.').pop();
+    const fileName = `product-${Date.now()}.${fileExt}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage.from('melek_media').upload(fileName, file);
+
+    if (uploadError) {
+      console.error(uploadError);
+      showToast('Erreur lors de l\'upload de l\'image', 'error');
+      btn.disabled = false; btn.textContent = 'Enregistrer';
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('melek_media').getPublicUrl(fileName);
+    image = publicUrlData.publicUrl;
+  }
+
+  if (!image) {
+    showToast('Veuillez ajouter une image', 'error');
+    btn.disabled = false; btn.textContent = 'Enregistrer';
+    return;
   }
 
   const data = { name, category, subcategory, description, price, image, badge, featured };
-  if (editingId) { updateProduct(editingId, data); showToast('Produit modifié ✓'); }
-  else { addProduct(data); showToast('Produit ajouté ✓'); }
+  if (editingId) { await updateProduct(editingId, data); showToast('Produit modifié ✓'); }
+  else { await addProduct(data); showToast('Produit ajouté ✓'); }
 
-  closeProductForm(); loadProductTable(); loadDashboard();
+  btn.disabled = false; btn.textContent = 'Enregistrer';
+  closeProductForm(); await loadProductTable(); await loadDashboard();
 }
 
-function confirmDelete(id) {
-  const p = getProductById(id); if (!p) return;
+async function confirmDelete(id) {
+  const p = await getProductById(id); if (!p) return;
   if (confirm(`Supprimer "${p.name}" ? Cette action est irréversible.`)) {
-    deleteProduct(id);
+    await deleteProduct(id);
     showToast('Produit supprimé', 'error');
-    loadProductTable(); loadDashboard();
+    await loadProductTable(); await loadDashboard();
   }
 }
 
 // ── LOOKS ADMIN ───────────────────────────────────────────────
-function loadLooksAdmin() {
+async function loadLooksAdmin() {
   const grid = document.getElementById('looks-admin-grid'); if (!grid) return;
-  const looks = getLooks();
+  const looks = await getLooks();
   if (looks.length === 0) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted)">Aucun look. Ajoutez-en un !</div>';
     return;
   }
   grid.innerHTML = looks.map(l => {
     const isVideo = l.media_type === 'video';
-    const mediaSrc = (l.image && !l.image.startsWith('idbv:')) ? l.image : '';
+    const mediaSrc = l.image || '';
     const mediaEl = isVideo
-      ? `<video class="look-admin-img" src="${mediaSrc}" ${l.image.startsWith('idbv:') ? `data-idb="${l.image}"` : ''} muted autoplay loop playsinline style="object-fit:cover;width:100%;aspect-ratio:3/4"></video>`
+      ? `<video class="look-admin-img" src="${mediaSrc}" muted autoplay loop playsinline style="object-fit:cover;width:100%;aspect-ratio:3/4"></video>`
       : `<img class="look-admin-img" src="${mediaSrc}" alt="${l.description}" onerror="this.src='https://via.placeholder.com/200x267/1a1a1a/c9a96e?text=IMG'">`;
     return `
       <div class="look-admin-card">
@@ -247,8 +279,6 @@ function loadLooksAdmin() {
         </div>
       </div>`;
   }).join('');
-  // Load IDB videos asynchronously
-  loadIDBMedia();
 }
 
 // Tab switcher for look media
@@ -292,18 +322,16 @@ function handleLookMediaUpload(input) {
     if (file.size > 200 * 1024 * 1024) { // 200MB max
       showToast('Vidéo trop grande ! Max : 200MB', 'error'); input.value = ''; return;
     }
-    lookMediaData = { type: 'video', blob: file, base64: null };
     if (lookVideoObjectURL) URL.revokeObjectURL(lookVideoObjectURL);
     lookVideoObjectURL = URL.createObjectURL(file);
     imgPreview.classList.remove('show');
     videoPreview.src = lookVideoObjectURL; videoPreview.classList.add('show');
   } else {
-    if (file.size > 3000000) { showToast('Image trop grande ! Max recommandé : 3MB', 'error'); input.value = ''; return; }
+    if (file.size > 5000000) { showToast('Image trop grande ! Max recommandé : 5MB', 'error'); input.value = ''; return; }
     const reader = new FileReader();
     reader.onload = e => {
-      lookMediaData = { type: 'image', base64: e.target.result, blob: null };
       videoPreview.classList.remove('show');
-      imgPreview.src = lookMediaData.base64; imgPreview.classList.add('show');
+      imgPreview.src = e.target.result; imgPreview.classList.add('show');
     };
     reader.readAsDataURL(file);
   }
@@ -326,43 +354,55 @@ async function saveLook() {
   const tagsRaw = document.getElementById('lf-tags').value.trim();
   const urlInput = document.getElementById('lf-image')?.value.trim() || '';
   const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+  const fileInput = document.getElementById('lf-image-file');
+  const file = fileInput.files[0];
 
   if (!description) { showToast('Veuillez remplir la description', 'error'); return; }
 
-  let image, media_type;
+  const btn = document.querySelector('#look-form button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Publication...';
 
-  if (lookMediaData) {
-    media_type = lookMediaData.type;
-    if (lookMediaData.type === 'video') {
-      try {
-        showToast('Enregistrement de la vidéo…');
-        image = await saveVideoBlob(lookMediaData.blob);
-      } catch (e) { showToast('Erreur vidéo. Réessayez.', 'error'); return; }
-    } else {
-      image = lookMediaData.base64;
+  let image = urlInput;
+  let media_type = urlInput.match(/\.(mp4|webm|ogg|mov)$/i) ? 'video' : 'image';
+
+  // Upload to Supabase Storage if file is selected
+  if (file) {
+    showToast('Upload du média en cours...');
+    media_type = file.type.startsWith('video/') ? 'video' : 'image';
+    const fileExt = file.name.split('.').pop();
+    const fileName = `look-${Date.now()}.${fileExt}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage.from('melek_media').upload(fileName, file);
+
+    if (uploadError) {
+      console.error(uploadError);
+      showToast('Erreur lors de l\'upload', 'error');
+      btn.disabled = false; btn.textContent = 'Publier';
+      return;
     }
-  } else if (urlInput) {
-    image = urlInput;
-    media_type = urlInput.match(/\.(mp4|webm|ogg|mov)$/i) ? 'video' : 'image';
-  } else {
-    showToast('Ajoutez une photo, une vidéo ou une URL', 'error'); return;
+
+    const { data: publicUrlData } = supabase.storage.from('melek_media').getPublicUrl(fileName);
+    image = publicUrlData.publicUrl;
   }
 
-  addLook({ image, media_type, description, tags });
-  lookMediaData = null;
+  if (!image) {
+    showToast('Veuillez ajouter une photo, une vidéo ou une URL', 'error');
+    btn.disabled = false; btn.textContent = 'Publier';
+    return;
+  }
+
+  await addLook({ image, media_type, description, tags });
   showToast('Look publié avec succès ✓');
+  btn.disabled = false; btn.textContent = 'Publier';
   closeLookForm();
-  loadLooksAdmin();
+  await loadLooksAdmin();
 }
 
-function confirmDeleteLook(id) {
-  const looks = getLooks();
-  const look = looks.find(l => l.id === id);
+async function confirmDeleteLook(id) {
   if (confirm('Supprimer ce look ?')) {
-    if (look?.image?.startsWith('idbv:')) deleteVideoBlob(look.image);
-    deleteLook(id);
-    showToast('Look supprimé');
-    loadLooksAdmin();
+    await deleteLook(id);
+    showToast('Look supprimé', 'error');
+    await loadLooksAdmin();
   }
 }
 

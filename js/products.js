@@ -135,72 +135,73 @@ const DEFAULT_LOOKS = [
   }
 ];
 
-/* ── CRUD FUNCTIONS ─────────────────────────────────────────── */
+/* ── CRUD FUNCTIONS (SUPABASE) ─────────────────────────────── */
 
-function initData() {
-  if (!localStorage.getItem('melek_products')) {
-    localStorage.setItem('melek_products', JSON.stringify(DEFAULT_PRODUCTS));
+async function initData() {
+  // Optionnel: peut servir à vérifier la connexion ou insérer les defaults si la db est vide
+  const { data: pdts } = await supabase.from('products').select('id').limit(1);
+  if (!pdts || pdts.length === 0) {
+    console.log("Database looks empty. You should insert DEFAULT_PRODUCTS manually or implement seed.");
   }
-  if (!localStorage.getItem('melek_looks')) {
-    localStorage.setItem('melek_looks', JSON.stringify(DEFAULT_LOOKS));
-  }
 }
 
-function getProducts() {
-  initData();
-  return JSON.parse(localStorage.getItem('melek_products') || '[]');
+async function getProducts() {
+  const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false });
+  if (error) console.error("Error getProducts:", error);
+  return data || [];
 }
 
-function getProductsByCategory(cat) {
-  return getProducts().filter(p => p.category === cat);
+async function getProductsByCategory(cat) {
+  const { data, error } = await supabase.from('products').select('*').eq('category', cat).order('id', { ascending: false });
+  if (error) console.error("Error getProductsByCategory:", error);
+  return data || [];
 }
 
-function getFeaturedProducts(limit = 4) {
-  return getProducts().filter(p => p.featured).slice(0, limit);
+async function getFeaturedProducts(limit = 4) {
+  const { data, error } = await supabase.from('products').select('*').eq('featured', true).order('id', { ascending: false }).limit(limit);
+  if (error) console.error("Error getFeaturedProducts:", error);
+  return data || [];
 }
 
-function getProductById(id) {
-  return getProducts().find(p => p.id == id) || null;
+async function getProductById(id) {
+  const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
+  if (error) console.error("Error getProductById:", error);
+  return data || null;
 }
 
-function addProduct(data) {
-  const products = getProducts();
-  const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-  products.push({ id: newId, ...data });
-  localStorage.setItem('melek_products', JSON.stringify(products));
-  return newId;
+async function addProduct(data) {
+  const { data: inserted, error } = await supabase.from('products').insert([data]).select();
+  if (error) { console.error("Error addProduct:", error); return null; }
+  return inserted[0]?.id;
 }
 
-function updateProduct(id, data) {
-  const products = getProducts();
-  const idx = products.findIndex(p => p.id == id);
-  if (idx === -1) return false;
-  products[idx] = { ...products[idx], ...data };
-  localStorage.setItem('melek_products', JSON.stringify(products));
+async function updateProduct(id, data) {
+  const { error } = await supabase.from('products').update(data).eq('id', id);
+  if (error) { console.error("Error updateProduct:", error); return false; }
   return true;
 }
 
-function deleteProduct(id) {
-  const products = getProducts().filter(p => p.id != id);
-  localStorage.setItem('melek_products', JSON.stringify(products));
+async function deleteProduct(id) {
+  const { error } = await supabase.from('products').delete().eq('id', id);
+  if (error) console.error("Error deleteProduct:", error);
 }
 
-function getLooks() {
-  initData();
-  return JSON.parse(localStorage.getItem('melek_looks') || '[]');
+async function getLooks() {
+  const { data, error } = await supabase.from('looks').select('*').order('id', { ascending: false });
+  if (error) console.error("Error getLooks:", error);
+  return data || [];
 }
 
-function addLook(data) {
-  const looks = getLooks();
-  const newId = looks.length > 0 ? Math.max(...looks.map(l => l.id)) + 1 : 1;
-  looks.unshift({ id: newId, date: new Date().toISOString().split('T')[0], ...data });
-  localStorage.setItem('melek_looks', JSON.stringify(looks));
-  return newId;
+async function addLook(data) {
+  const paylaod = { ...data, date: new Date().toISOString().split('T')[0] };
+  const { data: inserted, error } = await supabase.from('looks').insert([paylaod]).select();
+  if (error) { console.error("Error addLook:", error); return null; }
+  return inserted[0]?.id;
 }
 
-function deleteLook(id) {
-  const looks = getLooks().filter(l => l.id != id);
-  localStorage.setItem('melek_looks', JSON.stringify(looks));
+async function deleteLook(id) {
+  const { error } = await supabase.from('looks').delete().eq('id', id);
+  if (error) console.error("Error deleteLook:", error);
 }
 
 /* ── WHATSAPP ORDER ─────────────────────────────────────────── */
@@ -281,63 +282,7 @@ function showToast(msg, type = 'success') {
   setTimeout(() => t.remove(), 3200);
 }
 
-// ── INDEXEDDB (stockage médias) ───────────────────────────────
-const MEDIA_DB_NAME = 'melek_media_v1';
-
-function openMediaDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(MEDIA_DB_NAME, 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('blobs', { keyPath: 'id', autoIncrement: true });
-    req.onsuccess = e => res(e.target.result);
-    req.onerror = e => rej(e.target.error);
-  });
-}
-
-async function saveVideoBlob(blob) {
-  const db = await openMediaDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction('blobs', 'readwrite');
-    const req = tx.objectStore('blobs').add({ blob });
-    req.onsuccess = e => res(`idbv:${e.target.result}`);
-    req.onerror = e => rej(e.target.error);
-  });
-}
-
-async function getVideoURL(idbKey) {
-  const id = parseInt(idbKey.replace('idbv:', ''));
-  const db = await openMediaDB();
-  return new Promise((res, rej) => {
-    const req = db.transaction('blobs').objectStore('blobs').get(id);
-    req.onsuccess = e => res(e.target.result ? URL.createObjectURL(e.target.result.blob) : null);
-    req.onerror = e => rej(e.target.error);
-  });
-}
-
-async function deleteVideoBlob(idbKey) {
-  if (!idbKey?.startsWith('idbv:')) return;
-  const id = parseInt(idbKey.replace('idbv:', ''));
-  const db = await openMediaDB();
-  const tx = db.transaction('blobs', 'readwrite');
-  tx.objectStore('blobs').delete(id);
-}
-
-async function loadIDBMedia(container = document) {
-  const elements = container.querySelectorAll('[data-idb]');
-  for (const el of elements) {
-    try {
-      if (el.dataset.idbLoaded) continue;
-      const url = await getVideoURL(el.dataset.idb);
-      if (url) {
-        el.src = url;
-        el.dataset.idbLoaded = "true";
-        if (el.tagName === 'VIDEO') el.load();
-      }
-    } catch (e) { console.warn('IDB load error', e); }
-  }
-}
-
-
-function renderProductCard(product) {
+function openWhatsAppOrder(product, qty) {
   const badgeHTML = product.badge
     ? `<span class="product-badge">${product.badge}</span>`
     : '';
@@ -376,8 +321,8 @@ function changeQty(id, delta) {
   input.value = val;
 }
 
-function orderProduct(id) {
-  const product = getProductById(id);
+async function orderProduct(id) {
+  const product = await getProductById(id);
   if (!product) return;
   const qty = parseInt(document.getElementById(`qty-${id}`)?.value || 1);
   openWhatsAppOrder(product, qty);
