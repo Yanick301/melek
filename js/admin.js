@@ -221,8 +221,8 @@ async function saveProduct() {
     const { data: uploadData, error: uploadError } = await supabase.storage.from('melek_media').upload(fileName, file);
 
     if (uploadError) {
-      console.error(uploadError);
-      showToast('Erreur lors de l\'upload de l\'image', 'error');
+      console.error("Storage upload error:", uploadError);
+      showToast('Erreur upload : ' + (uploadError.message || uploadError.error_description || 'Inconnue'), 'error');
       btn.disabled = false; btn.textContent = 'Enregistrer';
       return;
     }
@@ -238,8 +238,21 @@ async function saveProduct() {
   }
 
   const data = { name, category, subcategory, description, price, image, badge, featured };
-  if (editingId) { await updateProduct(editingId, data); showToast('Produit modifié ✓'); }
-  else { await addProduct(data); showToast('Produit ajouté ✓'); }
+  if (editingId) {
+    const ok = await updateProduct(editingId, data);
+    if (!ok) {
+      showToast("Erreur lors de la mise à jour en base de données", "error");
+    } else {
+      showToast('Produit modifié ✓');
+    }
+  } else {
+    const newId = await addProduct(data);
+    if (!newId) {
+      showToast("Erreur lors de l'ajout en base de données", "error");
+    } else {
+      showToast('Produit ajouté ✓');
+    }
+  }
 
   btn.disabled = false; btn.textContent = 'Enregistrer';
   closeProductForm(); await loadProductTable(); await loadDashboard();
@@ -375,8 +388,8 @@ async function saveLook() {
     const { data: uploadData, error: uploadError } = await supabase.storage.from('melek_media').upload(fileName, file);
 
     if (uploadError) {
-      console.error(uploadError);
-      showToast('Erreur lors de l\'upload', 'error');
+      console.error("Storage upload error (Look):", uploadError);
+      showToast('Erreur upload média : ' + (uploadError.message || uploadError.error_description || 'Inconnue'), 'error');
       btn.disabled = false; btn.textContent = 'Publier';
       return;
     }
@@ -391,7 +404,12 @@ async function saveLook() {
     return;
   }
 
-  await addLook({ image, media_type, description, tags });
+  const newId = await addLook({ image, media_type, description, tags });
+  if (!newId) {
+    showToast("Erreur lors de l'enregistrement du look en base de données", "error");
+    btn.disabled = false; btn.textContent = 'Publier';
+    return;
+  }
   showToast('Look publié avec succès ✓');
   btn.disabled = false; btn.textContent = 'Publier';
   closeLookForm();
