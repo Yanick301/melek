@@ -11,15 +11,27 @@ import { X } from 'lucide-react'
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false)
+    const [isVisible, setIsVisible] = useState(true)
+    const [lastScrollY, setLastScrollY] = useState(0)
     const [isCartOpen, setIsCartOpen] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const { totalItems } = useCart()
 
     useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 20)
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY
+            setIsScrolled(currentScrollY > 50)
+
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                setIsVisible(false)
+            } else {
+                setIsVisible(true)
+            }
+            setLastScrollY(currentScrollY)
+        }
         window.addEventListener('scroll', handleScroll)
         return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
+    }, [lastScrollY])
 
     const navLinks = [
         { name: 'Collections', href: '/boutique' },
@@ -30,26 +42,34 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className={`nav-fixed ${isScrolled ? 'nav-scrolled' : ''}`}>
-                <div className="container nav-content">
+            <motion.nav
+                initial={{ y: 0 }}
+                animate={{ y: isVisible ? 0 : -100 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled
+                    ? 'py-4 bg-black/80 backdrop-blur-md border-b border-white/5'
+                    : 'py-8 bg-transparent'
+                    }`}
+            >
+                <div className="container mx-auto px-6 lg:px-20 flex justify-between items-center">
                     <Link href="/">
                         <Logo />
                     </Link>
 
-                    <ul className="nav-links">
+                    <ul className="nav-links hidden lg:flex">
                         {navLinks.map((link) => (
                             <li key={link.name}>
-                                <Link href={link.href} className="hover:opacity-60 transition-opacity">
+                                <Link href={link.href} className="hover:text-accent transition-colors">
                                     {link.name}
                                 </Link>
                             </li>
                         ))}
                     </ul>
 
-                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                    <div className="flex gap-6 items-center">
                         <button
                             onClick={() => setIsCartOpen(true)}
-                            style={{ position: 'relative' }}
+                            className="relative group"
                         >
                             <ShoppingBag size={20} strokeWidth={1.5} />
                             {totalItems > 0 && (
@@ -65,14 +85,14 @@ export default function Navbar() {
                             )}
                         </button>
                         <button
-                            className="md:hidden"
+                            className="lg:hidden text-white"
                             onClick={() => setIsMenuOpen(true)}
                         >
-                            <Menu size={20} />
+                            <Menu size={20} strokeWidth={1} />
                         </button>
                     </div>
                 </div>
-            </nav>
+            </motion.nav>
 
             {/* Mobile Menu Overlay */}
             <AnimatePresence>

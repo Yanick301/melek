@@ -35,75 +35,102 @@ export default function CartSheet({ isOpen, onClose }: { isOpen: boolean, onClos
                     />
 
                     <motion.div
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
-                        transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-                        style={{
-                            position: 'fixed', top: 0, right: 0, bottom: 0,
-                            width: '100%', maxWidth: '500px', background: '#050505',
-                            zIndex: 120, display: 'flex', flexDirection: 'column',
-                            borderLeft: '1px solid var(--border)', boxShadow: '-20px 0 50px rgba(0,0,0,0.5)'
-                        }}
+                        initial={{ x: '100%', opacity: 0.5 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: '100%', opacity: 0 }}
+                        transition={{ type: 'spring', damping: 30, stiffness: 200, mass: 0.8 }}
+                        className="fixed top-0 right-0 bottom-0 w-full max-w-md md:max-w-lg bg-black/40 backdrop-blur-3xl z-[120] flex flex-col border-l border-white/5 shadow-[0_0_100px_rgba(0,0,0,0.8)]"
                     >
-                        <div style={{ padding: '3rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <ShoppingBag size={20} style={{ color: 'var(--accent)' }} />
-                                <h2 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.4em' }}>
-                                    Le Panier ({totalItems})
-                                </h2>
+                        {/* Cart Header */}
+                        <div className="p-8 md:p-12 border-b border-white/5 flex justify-between items-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-30" />
+                            <div className="flex items-center gap-6 relative z-10">
+                                <div className="p-3 bg-white/5 rounded-full">
+                                    <ShoppingBag size={24} className="text-accent" strokeWidth={1.5} />
+                                </div>
+                                <div>
+                                    <h2 className="text-[10px] uppercase tracking-[0.6em] font-bold text-white/90">
+                                        Votre Sélection
+                                    </h2>
+                                    <p className="text-[8px] uppercase tracking-[0.2em] text-accent mt-1">
+                                        {totalItems} Article{totalItems > 1 ? 's' : ''} d'exception
+                                    </p>
+                                </div>
                             </div>
-                            <button onClick={onClose} style={{ opacity: 0.6 }} className="hover:opacity-100 transition-opacity">
-                                <X size={24} />
+                            <button
+                                onClick={onClose}
+                                className="group relative p-2 overflow-hidden rounded-full hover:bg-white/5 transition-colors"
+                            >
+                                <X size={24} className="text-white/40 group-hover:text-white transition-colors rotate-90 group-hover:rotate-0 duration-500" />
                             </button>
                         </div>
 
-                        <div style={{ flex: 1, overflowY: 'auto', padding: '3rem' }}>
+                        <div className="flex-1 overflow-y-auto px-8 md:px-12 py-12 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
                             {items.length === 0 ? (
-                                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
-                                    <ShoppingBag size={48} strokeWidth={1} style={{ marginBottom: '2rem' }} />
-                                    <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.3em' }}>Votre écrin est vide</p>
+                                <div className="h-full flex flex-col items-center justify-center opacity-20 group">
+                                    <motion.div
+                                        animate={{ y: [0, -10, 0] }}
+                                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                    >
+                                        <ShoppingBag size={80} strokeWidth={0.5} className="mb-8" />
+                                    </motion.div>
+                                    <p className="text-[10px] uppercase tracking-[0.5em] font-light">L'écrin est vide</p>
                                 </div>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+                                <div className="space-y-12">
                                     {items.map((item) => (
-                                        <div key={`${item.id}-${item.size}`} style={{ display: 'flex', gap: '2rem' }}>
-                                            <div style={{ width: '80px', aspectRatio: '3/4', background: '#111', overflow: 'hidden', flexShrink: 0 }}>
-                                                <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <motion.div
+                                            layout
+                                            key={`${item.id}-${item.size}`}
+                                            className="flex gap-8 group"
+                                        >
+                                            <div className="w-24 aspect-[3/4] bg-[#0A0A0A] overflow-hidden flex-shrink-0 relative">
+                                                <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-black/10 transition-opacity group-hover:opacity-0" />
                                             </div>
-                                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                                <div>
-                                                    <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>{item.name}</h4>
-                                                    <p style={{ fontSize: '0.6rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-                                                        Taille: {item.size} • Qté: {item.quantity}
+                                            <div className="flex-1 flex flex-col py-1">
+                                                <div className="mb-auto">
+                                                    <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/90 mb-2 truncate">{item.name}</h4>
+                                                    <p className="text-[9px] uppercase tracking-[0.3em] font-medium text-accent">
+                                                        Taille {item.size} • Qté {item.quantity}
                                                     </p>
                                                 </div>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <p style={{ fontSize: '1rem', fontFamily: 'Bodoni Moda', fontStyle: 'italic' }}>{formatPrice(item.price * item.quantity)}</p>
-                                                    <button onClick={() => removeFromCart(item.id, item.size)} style={{ fontSize: '0.6rem', textTransform: 'uppercase', opacity: 0.4 }} className="hover:opacity-100 hover:text-red-400 transition-all">
+                                                <div className="flex justify-between items-end">
+                                                    <p className="text-lg font-serif italic text-white/80">{formatPrice(item.price * item.quantity)}</p>
+                                                    <button
+                                                        onClick={() => removeFromCart(item.id, item.size)}
+                                                        className="text-[9px] uppercase tracking-[0.2em] text-white/30 hover:text-red-400 font-bold transition-all border-b border-transparent hover:border-red-400/30 pb-1"
+                                                    >
                                                         Retirer
                                                     </button>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     ))}
                                 </div>
                             )}
                         </div>
 
                         {items.length > 0 && (
-                            <div style={{ padding: '3rem', borderTop: '1px solid var(--border)', background: '#080808' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.6 }}>Total</span>
-                                    <span style={{ fontSize: '1.8rem', fontFamily: 'Bodoni Moda', fontStyle: 'italic', color: 'var(--accent)' }}>{formatPrice(totalPrice)}</span>
+                            <div className="p-8 md:p-12 bg-white/[0.02] backdrop-blur-3xl border-t border-white/10 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-[80px] rounded-full pointer-events-none" />
+                                <div className="flex justify-between items-center mb-8 relative z-10">
+                                    <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Total Estimation</span>
+                                    <span className="text-3xl font-serif italic text-accent drop-shadow-[0_0_15px_rgba(184,134,11,0.2)]">{formatPrice(totalPrice)}</span>
                                 </div>
                                 <button
                                     onClick={handleCheckout}
-                                    className="btn-primary"
-                                    style={{ width: '100%', padding: '1.8rem' }}
+                                    className="relative group w-full py-8 text-[10px] uppercase font-bold tracking-[0.5em] overflow-hidden bg-white text-black hover:text-white transition-colors duration-500"
                                 >
-                                    Passer la commande (WhatsApp)
+                                    <div className="absolute inset-0 bg-accent translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                                    <span className="relative z-10 flex items-center justify-center gap-4">
+                                        Acquérir via WhatsApp
+                                        <div className="w-1.5 h-1.5 bg-black group-hover:bg-white rounded-full animate-pulse transition-colors" />
+                                    </span>
                                 </button>
+                                <p className="text-[8px] uppercase tracking-[0.2em] text-white/30 text-center mt-6">
+                                    Authenticité héritage garantie Melek
+                                </p>
                             </div>
                         )}
                     </motion.div>

@@ -1,77 +1,153 @@
 "use client"
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Search, Info } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, SlidersHorizontal } from 'lucide-react'
+import { MOCK_PRODUCTS } from '@/lib/data/products'
+import Link from 'next/link'
 
 export default function BoutiquePage() {
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedCategory, setSelectedCategory] = useState('Tous')
+
+    const categories = ['Tous', 'Homme', 'Femme']
+
+    const filteredProducts = useMemo(() => {
+        return MOCK_PRODUCTS.filter(product => {
+            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
+            const matchesCategory = selectedCategory === 'Tous' || product.category === selectedCategory
+            return matchesSearch && matchesCategory
+        })
+    }, [searchQuery, selectedCategory])
 
     return (
-        <div style={{ paddingTop: '10rem', paddingBottom: '10rem', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="container" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <header style={{ textAlign: 'center', marginBottom: '8rem' }}>
+        <div className="pt-32 pb-32 min-h-screen bg-black">
+            <div className="container mx-auto px-6 lg:px-20">
+                {/* Editorial Header */}
+                <header className="mb-32 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3" />
+
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1.2 }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 1, ease: "easeOut" }}
                     >
-                        <h1 style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', marginBottom: '1.5rem' }}>La Curathèque.</h1>
-                        <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5em', color: 'var(--accent)' }}>
-                            L'Art de la Curation Héritage
-                        </p>
+                        <h1 className="text-7xl md:text-9xl font-serif text-white/95 leading-tight mb-8">
+                            La <span className="italic text-accent">Curathèque</span>
+                        </h1>
+                        <div className="flex items-center gap-8">
+                            <div className="w-16 h-[1px] bg-accent/40" />
+                            <p className="text-[10px] uppercase tracking-[0.5em] text-white/40 font-bold">
+                                Archives & Collections • Heritage 2026
+                            </p>
+                        </div>
                     </motion.div>
                 </header>
 
-                {/* Sublime Empty State */}
-                <div style={{
-                    flex: 1, display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-                    position: 'relative'
-                }}>
+                {/* Refined Navigation & Filters */}
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-12 mb-24 pb-12 border-b border-white/5 relative z-10">
+                    <div className="flex flex-wrap gap-x-12 gap-y-6">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className="group relative py-2"
+                            >
+                                <span className={`text-[10px] uppercase tracking-[0.4em] transition-all duration-500 ${selectedCategory === cat ? 'text-white font-bold' : 'text-white/30 group-hover:text-white'}`}>
+                                    {cat}
+                                </span>
+                                {selectedCategory === cat && (
+                                    <motion.div
+                                        layoutId="activeCategory"
+                                        className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-accent"
+                                    />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-12 w-full lg:w-auto">
+                        <div className="relative flex-1 lg:w-80 group">
+                            <Search size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-accent transition-colors" strokeWidth={1.5} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher une pièce..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-transparent border-none pl-10 text-[11px] uppercase tracking-[0.2em] text-white outline-none w-full placeholder:text-white/10"
+                            />
+                            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-white/5 group-focus-within:bg-accent/40 transition-colors" />
+                        </div>
+
+                        <button className="flex items-center gap-4 text-white/40 hover:text-white transition-colors group">
+                            <SlidersHorizontal size={16} strokeWidth={1.5} />
+                            <span className="text-[10px] uppercase tracking-[0.3em] font-bold">Filtres</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Enhanced Product Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-24">
+                    <AnimatePresence mode='popLayout'>
+                        {filteredProducts.map((product, idx) => (
+                            <motion.div
+                                layout
+                                key={product.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{
+                                    duration: 0.8,
+                                    delay: idx % 4 * 0.1,
+                                    ease: [0.22, 1, 0.36, 1]
+                                }}
+                                className="group"
+                            >
+                                <Link href={`/produit/${product.id}`} className="block">
+                                    <div className="relative aspect-[3/4] overflow-hidden bg-[#050505] mb-8 ring-1 ring-white/5 transition-all duration-700 group-hover:ring-accent/20">
+                                        <img
+                                            src={product.image_url}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-40 transition-opacity group-hover:opacity-80" />
+
+                                        <div className="absolute bottom-6 left-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                                            <span className="w-full inline-block text-center py-4 bg-white/5 backdrop-blur-2xl border border-white/10 text-white text-[9px] uppercase tracking-[0.4em] font-bold">
+                                                Voir la curation
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-center px-4">
+                                        <div className="flex items-center justify-center gap-3 mb-3">
+                                            <span className="text-[8px] uppercase tracking-[0.4em] text-accent/60 font-bold whitespace-nowrap">
+                                                {product.category}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-[11px] uppercase tracking-[0.2em] font-light text-white/90 group-hover:text-white mb-3 line-clamp-1">
+                                            {product.name}
+                                        </h4>
+                                        <p className="font-serif italic text-lg text-white/40 group-hover:text-accent transition-colors">
+                                            {new Intl.NumberFormat('fr-BJ', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(product.price)}
+                                        </p>
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+
+                {filteredProducts.length === 0 && (
                     <motion.div
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.1 }}
-                        transition={{ duration: 2 }}
-                        style={{
-                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                            width: '100%', maxWidth: '800px', pointerEvents: 'none', zIndex: -1
-                        }}
+                        animate={{ opacity: 1 }}
+                        className="py-40 text-center"
                     >
-                        <img src="/hero-prestige.png" alt="" style={{ width: '100%', filter: 'grayscale(100%) blur(10px)' }} />
+                        <p className="text-[10px] uppercase tracking-[0.8em] text-white/20 italic">
+                            Aucun trésor ne correspond à votre recherche.
+                        </p>
                     </motion.div>
-
-                    <div style={{ maxWidth: '600px', zIndex: 10 }}>
-                        <h2 style={{ fontSize: '2.5rem', marginBottom: '2rem', fontStyle: 'italic' }}>Une Sélection <span className="text-accent">Souveraine</span> se Prépare.</h2>
-                        <p style={{ fontSize: '1.2rem', fontFamily: 'Bodoni Moda', opacity: 0.6, lineHeight: '1.8', marginBottom: '4rem' }}>
-                            "La mode est ce que vous adoptez quand vous ne savez pas qui vous êtes." <br />
-                            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.2em' }}>— Quentin Crisp</span>
-                        </p>
-
-                        <div style={{ height: '1px', width: '100px', background: 'var(--accent)', margin: '0 auto 4rem' }}></div>
-
-                        <p style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.4em', opacity: 0.8, maxWidth: '400px', margin: '0 auto' }}>
-                            Nos curateurs finalisent l'acquisition de pièces d'exception à Cotonou. Livraison disponible partout au Bénin.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Minimal Search for UX readiness */}
-                <div style={{
-                    marginTop: '8rem', maxWidth: '300px', marginInline: 'auto',
-                    borderBottom: '1px solid var(--border)', paddingBottom: '1rem',
-                    opacity: 0.3
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <Search size={14} />
-                        <input
-                            type="text"
-                            placeholder="RECHERCHER PLUS TARD..."
-                            disabled
-                            style={{ background: 'none', border: 'none', color: 'white', fontSize: '0.6rem', letterSpacing: '0.2em', outline: 'none' }}
-                        />
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     )

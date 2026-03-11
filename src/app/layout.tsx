@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
 import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
@@ -18,13 +19,8 @@ export default function RootLayout({
       <body>
         <CartProvider>
           <Navbar />
-          <main>{children}</main>
-          <footer className="py-20 border-t border-white/5 text-center">
-            <div className="container">
-              <p className="text-xs uppercase tracking-widest text-muted mb-4">Livraison partout au Bénin — Basé à Cotonou</p>
-              <p className="text-xs uppercase tracking-widest text-muted opacity-50">© 2026 Melek Clothing. Tous droits réservés.</p>
-            </div>
-          </footer>
+          <main className="min-h-screen">{children}</main>
+          <Footer />
         </CartProvider>
       </body>
     </html>

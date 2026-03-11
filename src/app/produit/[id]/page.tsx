@@ -54,88 +54,120 @@ export default function ProductPage() {
     }
 
     return (
-        <div style={{ paddingTop: '10rem', paddingBottom: '10rem' }}>
-            <div className="container">
-                <Link href="/boutique" style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem', marginBottom: '4rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.2em', opacity: 0.6 }}>
-                    <ArrowLeft size={16} />
+        <div className="pt-32 pb-40 bg-black overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-[50vw] h-[50vh] bg-accent/5 blur-[150px] rounded-full -translate-x-1/2 -translate-y-1/2" />
+
+            <div className="container mx-auto px-6 lg:px-20 relative z-10">
+                <Link href="/boutique" className="group inline-flex items-center gap-4 mb-16 text-[10px] uppercase tracking-[0.4em] text-white/40 hover:text-white transition-all">
+                    <div className="p-2 border border-white/5 group-hover:border-white/20 transition-colors">
+                        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+                    </div>
                     Retour au catalogue
                 </Link>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '5rem' }}>
-                    {/* Visuals */}
-                    <div>
-                        <div style={{ aspectRatio: '4/5', background: '#111', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+                    {/* Visuals - Left Spans 7 columns */}
+                    <div className="lg:col-span-7 space-y-8">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 1.05 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 1.5 }}
+                            className="aspect-[4/5] bg-[#050505] overflow-hidden ring-1 ring-white/5 relative group"
+                        >
                             <img
-                                src={[product.image_url, ...(product.gallery || [])][activeImage]}
+                                src={[product.image_url, ...(product.gallery_urls || [])][activeImage]}
                                 alt={product.name}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105"
                             />
-                        </div>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            {[product.image_url, ...(product.gallery || [])].map((img, i) => (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
+                        </motion.div>
+
+                        <div className="flex gap-6">
+                            {[product.image_url, ...(product.gallery_urls || [])].map((img, i) => (
                                 <button
                                     key={i}
-                                    style={{ width: '80px', height: '100px', opacity: activeImage === i ? 1 : 0.4, transition: '0.3s' }}
+                                    className={`relative w-24 aspect-[3/4] overflow-hidden transition-all duration-500 ring-1 ${activeImage === i ? 'ring-accent p-1' : 'ring-white/5 opacity-40 hover:opacity-80'}`}
                                     onClick={() => setActiveImage(i)}
                                 >
-                                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', border: activeImage === i ? '1px solid var(--accent)' : 'none' }} />
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* Content */}
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: 'var(--accent)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: '1rem' }}>
-                            {product.category}
-                        </span>
-                        <h1 style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>{product.name}</h1>
-                        <p style={{ fontSize: '2rem', fontFamily: 'Bodoni Moda', fontStyle: 'italic', marginBottom: '3rem', opacity: 0.8 }}>
-                            {formatPrice(product.price)}
-                        </p>
-
-                        <div style={{ marginBottom: '4rem', opacity: 0.7, lineHeight: '1.8', fontSize: '1rem' }}>
-                            <p>{product.description}</p>
-                        </div>
-
-                        <div style={{ marginBottom: '4rem' }}>
-                            <p style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.25em', marginBottom: '1.5rem', fontWeight: 'bold' }}>
-                                Mesure du vêtement
-                            </p>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                {product.sizes.map((size: string) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => setSelectedSize(size)}
-                                        style={{
-                                            width: '60px', height: '60px', border: '1px solid',
-                                            borderColor: selectedSize === size ? 'white' : 'var(--border)',
-                                            background: selectedSize === size ? 'white' : 'transparent',
-                                            color: selectedSize === size ? 'black' : 'white',
-                                            fontSize: '0.8rem', fontWeight: 'bold', transition: '0.3s'
-                                        }}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={handleAddToCart}
-                            className="btn-primary"
-                            style={{ padding: '2rem', marginBottom: '3rem', width: '100%' }}
+                    {/* Content - Right Spans 5 columns */}
+                    <div className="lg:col-span-12 xl:col-span-5 flex flex-col pt-4">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
                         >
-                            <ShoppingBag size={20} style={{ marginRight: '1rem' }} />
-                            Acquérir cette pièce
-                        </button>
-
-                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', opacity: 0.6 }}>
-                                <ShieldCheck size={20} className="text-accent" />
-                                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Authénticité Garantie Melek</span>
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-12 h-[1px] bg-accent/40" />
+                                <span className="text-[10px] uppercase tracking-[0.5em] text-accent font-bold">
+                                    {product.category}
+                                </span>
                             </div>
-                        </div>
+
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white/95 leading-tight mb-8">
+                                {product.name}
+                            </h1>
+
+                            <p className="text-3xl md:text-5xl font-serif italic text-accent/90 mb-12 drop-shadow-lg">
+                                {formatPrice(product.price)}
+                            </p>
+
+                            <div className="prose prose-invert max-w-none text-white/60 leading-relax text-sm md:text-base font-light tracking-wide mb-16 border-l-2 border-accent/20 pl-8 italic">
+                                "{product.description}"
+                            </div>
+
+                            {/* Sizes */}
+                            <div className="mb-16">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h3 className="text-[10px] uppercase tracking-[0.4em] font-bold text-white/80">Choisir la mesure</h3>
+                                    <Link href="/guide-tailles" className="text-[8px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors underline underline-offset-8">Guide d'expertise</Link>
+                                </div>
+                                <div className="flex flex-wrap gap-4">
+                                    {product.sizes.map((size: string) => (
+                                        <button
+                                            key={size}
+                                            onClick={() => setSelectedSize(size)}
+                                            className={`w-16 h-16 flex items-center justify-center text-xs font-bold transition-all duration-500 border ${selectedSize === size
+                                                    ? 'bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.2)]'
+                                                    : 'bg-transparent text-white/40 border-white/5 hover:border-white/20 hover:text-white'
+                                                }`}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <button
+                                onClick={handleAddToCart}
+                                className="group relative w-full py-8 text-[11px] uppercase font-bold tracking-[0.6em] overflow-hidden bg-white text-black hover:text-white transition-colors duration-700 mb-12"
+                            >
+                                <div className="absolute inset-0 bg-accent translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out" />
+                                <span className="relative z-10 flex items-center justify-center gap-6">
+                                    <ShoppingBag size={18} strokeWidth={1.5} />
+                                    Acquérir cette curation
+                                </span>
+                            </button>
+
+                            {/* Trust Badges */}
+                            <div className="space-y-6 pt-12 border-t border-white/5">
+                                <div className="flex items-center gap-6 group">
+                                    <div className="p-3 bg-white/5 rounded-full group-hover:bg-accent/10 transition-colors">
+                                        <ShieldCheck size={20} className="text-accent" strokeWidth={1} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-[0.3em] text-white/80 font-bold">Authenticité Certifiée</p>
+                                        <p className="text-[8px] uppercase tracking-[0.1em] text-white/30 mt-1">Expertisée par Melek Heritage</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>
