@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Melek Clothing — À la Une. Photos d'essayage, looks du moment, inspirations mode.">
+    <title>À la Une — Melek Clothing</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .lookbook-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .look-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: pointer;
+            background: var(--bg-secondary);
+        }
+
+        .look-card:nth-child(4n+1) {
+            grid-row: span 2;
+        }
+
+        .look-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            min-height: 260px;
+            transition: transform .6s cubic-bezier(.25, .46, .45, .94);
+        }
+
+        .look-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .look-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(0, 0, 0, .84) 0%, transparent 55%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            opacity: 0;
+            transition: all .3s ease;
+        }
+
+        .look-card:hover .look-overlay {
+            opacity: 1;
+        }
+
+        .look-overlay p {
+            font-size: .85rem;
+            color: rgba(240, 237, 230, .9);
+            margin-bottom: 8px;
+        }
+
+        .look-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .look-tag {
+            font-size: .7rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .look-tag::before {
+            content: '#';
+        }
+
+        .look-date {
+            font-size: .7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        @media(max-width:768px) {
+            .lookbook-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .look-card:nth-child(4n+1) {
+                grid-row: span 1
+            }
+        }
+
+        @media(max-width:480px) {
+            .lookbook-grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="page-loader">
+        <div class="loader-logo">MELEK</div>
+        <div class="loader-bar"></div>
+    </div>
+    <div class="search-overlay">
+        <div class="search-box"><input type="text" placeholder="Rechercher…"><span class="search-close">✕</span></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-logo">MEL<span>EK</span></a>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="homme.html">Homme</a></li>
+                <li><a href="femme.html">Femme</a></li>
+                <li><a href="chaussures.html">Chaussures</a></li>
+                <li><a href="une.html" class="active">À la Une</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="nav-icon-btn search-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg></button>
+                <button class="nav-toggle"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </nav>
+    <div class="nav-mobile">
+        <a href="index.html">Accueil</a><a href="homme.html">Homme</a><a href="femme.html">Femme</a>
+        <a href="chaussures.html">Chaussures</a><a href="une.html">À la Une</a><a href="contact.html">Contact</a>
+    </div>
+
+    <section class="page-hero">
+        <div class="container">
+            <span class="overline">Lookbook</span>
+            <h1 class="display-2">À la Une</h1>
+            <p>Inspirations mode, photos d'essayage et looks du moment par notre communauté Melek.</p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="lookbook-grid" id="looks-grid">
+                <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">Chargement…</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-banner">
+        <div class="container" style="position:relative">
+            <span class="overline">Rejoins la communauté</span>
+            <h2 class="heading-1">Tu veux être mis en avant ?</h2>
+            <p style="color:var(--text-secondary);max-width:440px;margin:12px auto 28px">Partage tes looks Melek sur
+                Instagram et tag-nous pour apparaître ici !</p>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+                <a href="https://wa.me/2290163656925" target="_blank" class="btn btn-whatsapp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                    </svg>
+                    Nous contacter
+                </a>
+                <a href="index.html" class="btn btn-outline">Voir les produits</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand"><span class="nav-logo">MEL<span>EK</span></span>
+                    <p>Votre boutique de friperie premium.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Navigation</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="homme.html">Homme</a></li>
+                        <li><a href="femme.html">Femme</a></li>
+                        <li><a href="chaussures.html">Chaussures</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Infos</h4>
+                    <ul>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="admin.html">Admin</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4>
+                    <div class="footer-contact-item"><svg viewBox="0 0 24 24" fill="currentColor" width="14">
+                            <path
+                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                        </svg><span>+229 01 63 65 69 25</span></div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 Melek Clothing</p>
+            </div>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/2290163656925" target="_blank" class="fab-wa">
+        <div class="fab-wa-ping"></div><svg viewBox="0 0 24 24" fill="currentColor">
+            <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+        </svg>
+    </a>
+    <button class="back-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m18 15-6-6-6 6" />
+        </svg></button>
+    <div class="toast-container"></div>
+
+    <script src="js/products.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        const grid = document.getElementById('looks-grid');
+        const looks = getLooks();
+        if (looks.length === 0) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>Aucun look pour l\'instant</h3><p>Revenez bientôt pour découvrir les nouvelles inspirations mode !</p></div>';
+        } else {
+            grid.innerHTML = looks.map(look => {
+                const isVideo = look.media_type === 'video';
+                const mediaSrc = (look.image && !look.image.startsWith('idbv:')) ? look.image : '';
+                const dataIdb = look.image && look.image.startsWith('idbv:') ? `data-idb="${look.image}"` : '';
+                const mediaEl = isVideo
+                    ? `<video class="look-video" src="${mediaSrc}" ${dataIdb} muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;min-height:260px;transition:transform .6s"></video>`
+                    : `<img src="${mediaSrc}" ${dataIdb} alt="${look.description}" loading="lazy">`;
+                return `
+      <div class="look-card reveal">
+        ${mediaEl}
+        <div class="look-overlay">
+          <p>${look.description}</p>
+          <div class="look-tags">${look.tags.map(t => `<span class="look-tag">${t}</span>`).join('')}</div>
+          <div class="look-date">${look.date || ''} ${isVideo ? '🎬' : '📷'}</div>
+        </div>
+      </div>`;
+            }).join('');
+            if (window.loadIDBMedia) window.loadIDBMedia(grid);
+        }
+        if (window.observeReveal) observeReveal();
+    </script>
+</body>
+
+</html>
