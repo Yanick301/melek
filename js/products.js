@@ -282,7 +282,7 @@ function showToast(msg, type = 'success') {
   setTimeout(() => t.remove(), 3200);
 }
 
-function openWhatsAppOrder(product, qty) {
+function renderProductCard(product) {
   const badgeHTML = product.badge
     ? `<span class="product-badge">${product.badge}</span>`
     : '';
