@@ -167,14 +167,12 @@ function handleProductImageUpload(input) {
     showToast('Image trop grande ! Max recommandé : 2MB', 'error');
     input.value = ''; return;
   }
-  const label = document.getElementById('file-drop-label');
-  label.querySelector('span').textContent = file.name;
-  label.classList.add('has-file');
   const reader = new FileReader();
   reader.onload = e => {
     productImageData = e.target.result;
-    const preview = document.getElementById('fm-img-preview');
-    preview.src = productImageData; preview.classList.add('show');
+    document.getElementById('fm-img-preview').src = productImageData;
+    document.getElementById('fm-img-preview').classList.add('show');
+    if (document.getElementById('file-drop-label')) updateDropLabel('file-drop-label', file);
   };
   reader.readAsDataURL(file);
 }
@@ -254,11 +252,11 @@ function loadLooksAdmin() {
 }
 
 // Tab switcher for look media
-function switchLookTab(mode, btn) {
+function switchLookTab(tab, btn) {
   document.querySelectorAll('#look-form-overlay .upload-tab').forEach(t => t.classList.remove('active'));
   btn?.classList.add('active');
-  document.getElementById('look-file-group').style.display = mode === 'file' ? '' : 'none';
-  document.getElementById('look-url-group').style.display = mode === 'url' ? '' : 'none';
+  document.getElementById('look-file-group').style.display = tab === 'file' ? '' : 'none';
+  document.getElementById('look-url-group').style.display = tab === 'url' ? '' : 'none';
 }
 
 function openAddLook() {
@@ -365,6 +363,41 @@ function confirmDeleteLook(id) {
     deleteLook(id);
     showToast('Look supprimé');
     loadLooksAdmin();
+  }
+}
+
+// ── UPLOAD HELPERS ───────────────────────────────────────────
+function switchImgTab(tab, btn) {
+  document.querySelectorAll('#product-form .upload-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab === 'file') {
+    document.getElementById('img-file-group').style.display = 'block';
+    document.getElementById('img-url-group').style.display = 'none';
+  } else {
+    document.getElementById('img-file-group').style.display = 'none';
+    document.getElementById('img-url-group').style.display = 'block';
+  }
+}
+
+function updateDropLabel(id, file) {
+  const lbl = document.getElementById(id);
+  if (!lbl) return;
+  lbl.classList.add('has-file');
+  const size = (file.size / (1024 * 1024)).toFixed(2) + ' Mo';
+  lbl.querySelector('strong').textContent = file.name;
+  lbl.querySelector('span').textContent = 'Fichier sélectionné (' + size + ')';
+}
+
+function resetDropLabel(id) {
+  const lbl = document.getElementById(id);
+  if (!lbl) return;
+  lbl.classList.remove('has-file');
+  if (id === 'file-drop-label') {
+    lbl.querySelector('strong').textContent = 'Cliquez pour choisir une image';
+    lbl.querySelector('span').textContent = 'Max 3Mo (JPG, PNG)';
+  } else if (id === 'look-drop-label') {
+    lbl.querySelector('strong').textContent = 'Cliquez pour choisir un fichier';
+    lbl.querySelector('span').textContent = 'Photo ou vidéo';
   }
 }
 
